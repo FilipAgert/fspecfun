@@ -3,7 +3,7 @@ program main
     implicit none
     real(kind) :: x, g
     
-    g = gammaf(1.0_kind)
+    g = gammaf(0.5_kind)
 
 
     write(*,*) "gamma(1/2) = ", g

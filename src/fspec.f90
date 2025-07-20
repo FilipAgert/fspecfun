@@ -18,6 +18,11 @@ module fspec
             gammaf = fac(nint(x)-1)
             return
         endif
+        if(x + 0.5 == nint(x+0.5)) then
+            write(*,*) x-0.5
+            gammaf = fac_hint(nint(x-0.5)-1)
+            return
+        endif
         if(x+gammag+0.5 .le. 0) error stop "x + gamma_g +0.5 must be grt 0"
         !!https://en.wikipedia.org/wiki/Lanczos_approximation using g = 1
         gammaf = sqrt(2*pi) * (x-0.5_kind+gammag)**(x-0.5_kind) * exp(-(x+gammag-0.5_kind)) * gamma_Ag(x-1)
