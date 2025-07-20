@@ -17,8 +17,7 @@ module fspec
         if(x == nint(x)) then !!if integer argument, just call factorial
             gammaf = fac(nint(x)-1)
             return
-        endif
-        if(x + 0.5 == nint(x+0.5)) then
+        else if(x + 0.5 == nint(x+0.5)) then !!if half integer argument, call half int factorial
             gammaf = fac_hint(nint(x-0.5)-1)
             return
         endif
