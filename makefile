@@ -3,7 +3,7 @@ DSRC = src
 DOBJ = build
 DEXE = app
 DMOD = mod
-EXEN = finterp
+EXEN = fspec
 all: $(DEXE)/$(EXEN)
 # Flags
 LIBS = 
