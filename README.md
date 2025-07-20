@@ -27,3 +27,11 @@ Accuracy of `gamma(0.1)`:
 Expected:   9.5135076986687318362924871772654021925505786260883773430500007704342654...
 Current:  ≈ 9.51341 (3-decimal agreement)
 ```
+
+**Work in Progress**:
+
+
+**TODO**:
+- `Ai(x)` — Airy function
+- `Pnl(x)` — Orthogonal polynomials (Hermite, Legendre, Laguerre...)
+- `jn(x), yn(x)` — Bessel functions
