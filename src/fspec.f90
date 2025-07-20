@@ -14,6 +14,10 @@ module fspec
     real(kind) function gammaf(x)!!Gamma function for real numbers.
         real(kind), intent(in) :: x !!x>0
         real(kind), parameter :: pi = ACOS(-1.0_kind)
+        if(x == nint(x)) then !!if integer argument, just call factorial
+            gammaf = fac(nint(x)-1)
+            return
+        endif
         if(x+gammag+0.5 .le. 0) error stop "x + gamma_g +0.5 must be grt 0"
         !!https://en.wikipedia.org/wiki/Lanczos_approximation using g = 1
         gammaf = sqrt(2*pi) * (x-0.5_kind+gammag)**(x-0.5_kind) * exp(-(x+gammag-0.5_kind)) * gamma_Ag(x-1)
