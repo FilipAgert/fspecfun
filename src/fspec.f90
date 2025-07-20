@@ -6,12 +6,12 @@ module fspec
     private
     public :: kind, gammaf, fac_hint
 
-    integer, parameter :: gammag = 2
+    integer, parameter :: gammag = 2 !!g in the Lanczos approximation
 
     contains
 
 
-    real(kind) function gammaf(x)!!Gamma function 
+    real(kind) function gammaf(x)!!Gamma function for real numbers.
         real(kind), intent(in) :: x !!x>0
         real(kind), parameter :: pi = ACOS(-1.0_kind)
         if(x+gammag+0.5 .le. 0) error stop "x + gamma_g +0.5 must be grt 0"
@@ -85,7 +85,7 @@ module fspec
 
     end function
 
-    real(kind) function fac(n)
+    real(kind) function fac(n) !!factorial
         integer, intent(in) :: n
         logical, save :: first_time = .true.
         real(kind), save, allocatable :: f(:)
