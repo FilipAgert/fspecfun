@@ -4,26 +4,26 @@ module fspec
     integer, parameter :: kind = 8 !!double precision
     integer, parameter :: gamma_exp_order = 15 !!expansion order in the gamma series
     private
-    public :: kind, gammaf, fac_hint
+    public :: kind, gamma
 
     integer, parameter :: gammag = 2 !!g in the Lanczos approximation
 
     contains
 
 
-    real(kind) function gammaf(x)!!Gamma function for real numbers.
+    real(kind) function gamma(x)!!Gamma function for real numbers.
         real(kind), intent(in) :: x !!x>0
         real(kind), parameter :: pi = ACOS(-1.0_kind)
         if(x == nint(x)) then !!if integer argument, just call factorial
-            gammaf = fac(nint(x)-1)
+            gamma = fac(nint(x)-1)
             return
         else if(x + 0.5 == nint(x+0.5)) then !!if half integer argument, call half int factorial
-            gammaf = fac_hint(nint(x-0.5)-1)
+            gamma = fac_hint(nint(x-0.5)-1)
             return
         endif
         if(x+gammag+0.5 .le. 0) error stop "x + gamma_g +0.5 must be grt 0"
         !!https://en.wikipedia.org/wiki/Lanczos_approximation using g = 1
-        gammaf = sqrt(2*pi) * (x-0.5_kind+gammag)**(x-0.5_kind) * exp(-(x+gammag-0.5_kind)) * gamma_Ag(x-1)
+        gamma = sqrt(2*pi) * (x-0.5_kind+gammag)**(x-0.5_kind) * exp(-(x+gammag-0.5_kind)) * gamma_Ag(x-1)
     end function
 
     real(kind) function gamma_Ag(x)
