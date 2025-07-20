@@ -1,8 +1,11 @@
 program main
     use fspec
     implicit none
+    real(kind) :: x, g
+    
+    g = gammaf(0.5_kind)
 
 
-    write(*,*) "Hello world!"
+    write(*,*) "gamma(1/2) = ", g
 
 end program
