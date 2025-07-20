@@ -19,7 +19,6 @@ module fspec
             return
         endif
         if(x + 0.5 == nint(x+0.5)) then
-            write(*,*) x-0.5
             gammaf = fac_hint(nint(x-0.5)-1)
             return
         endif
