@@ -1,12 +1,12 @@
 module fspec
     implicit none
 
-    integer, parameter :: kind = 8 !!double precision
-    integer, parameter :: gamma_exp_order = 16 !!expansion order in the gamma series
+    integer, parameter :: kind = 16 !!double precision
+    integer, parameter :: gamma_exp_order = 13 !!expansion order in the gamma series
     private
     public :: kind, gamma
 
-    integer, parameter :: gammag = 2 !!g in the Lanczos approximation
+    integer, parameter :: gammag = 5 !!g in the Lanczos approximation
 
     contains
 
@@ -22,7 +22,7 @@ module fspec
             return
         endif
         if(x+gammag+0.5 .le. 0) error stop "x + gamma_g +0.5 must be grt 0"
-        !!https://en.wikipedia.org/wiki/Lanczos_approximation using g = 1
+        !!https://en.wikipedia.org/wiki/Lanczos_approximation
         gamma = sqrt(2*pi) * (x-0.5_kind+gammag)**(x-0.5_kind) * exp(-(x+gammag-0.5_kind)) * gamma_Ag(x-1)
     end function
 
@@ -33,8 +33,9 @@ module fspec
         s = 0.5_kind * gamma_pcoeff(0)
         fac = 1
         do k =1, gamma_exp_order
-            fac = fac * (x+1-k)/(x+k) !Goes as z/z+1 , z(z-1) / (z+1)(z+2) ... as k = 1,2,...
+            fac = fac * ((x+1-k)/(x+k)) !Goes as z/z+1 , z(z-1) / (z+1)(z+2) ... as k = 1,2,...
             s = s + fac*gamma_pcoeff(k)
+            !write(*,*) "s:", s, " fac:", fac, "pc", gamma_pcoeff(k)
         end do
         gamma_Ag = s
 
@@ -49,7 +50,7 @@ module fspec
         if(first_time) then
             do ii = 0, gamma_exp_order
                 pc(ii) = gamma_pcoeffg(real(gammag,kind),ii)
-                write(*,'(A,I4,A,E20.10)') "k:",ii, ", pk:", pc(ii)
+                !write(*,'(A,I4,A,E20.10)') "k:",ii, ", pk:", pc(ii)
             end do
             first_time = .false.
         endif
@@ -65,6 +66,7 @@ module fspec
         real(kind) :: s
         real(kind), parameter :: pi = ACOS(-1.0_kind)
         integer :: n, m, l
+        real(kind), save :: Fg(0:gamma_exp_order)
 
         if(first_time) then
             Cmat = 0    
@@ -72,12 +74,16 @@ module fspec
             Cmat(2,2) = 1
             do n = 2,size(Cmat,1)-1
                 Cmat(n+1,1) = -Cmat(n-1,1)
-                Cmat(n+1,n+1) = 2*Cmat(n,n)
+                Cmat(n+1,n+1) = 2_kind*Cmat(n,n)
             end do  
             do m = 1, size(Cmat,1)-1
                 do n = m+1, size(Cmat,1)-1
-                    Cmat(n+1,m+1) = 2*Cmat(n,m) -Cmat(n-1,m+1)
+                    Cmat(n+1,m+1) = 2_kind*Cmat(n,m) -Cmat(n-1,m+1)
                 end do
+            end do
+
+            do l = 0,gamma_exp_order
+                Fg(l) = sqrt(2.0_kind/pi) * ffac(2*l-1) * exp(l+g+0.5_kind) / (2_kind** l *(l+g+0.5_kind)**(l+0.5_kind))!https://www.numericana.com/answer/info/godfrey.htm
             end do
             first_time = .false.
         end if
@@ -85,13 +91,12 @@ module fspec
 
         s = 0
         do l = 0, k
-            s = s + Cmat(2*k+1,2*l+1)*fac_hint(l-1)/(l+g+0.5_kind)**(l+0.5_kind) *exp(l+g+0.5_kind)
-            write(*,'(A,E20.10, A,I4,A,E20.10,A,E20.10,A,E20.10,A,E20.10)') "s:", s, ". l:",l, ", C:", Cmat(2*k+1,2*l+1), ", fhalf:",fac_hint(l-1), ", denom:", (l+g+0.5_kind)**(l+0.5_kind), " exp:", exp(l+g+0.5_kind)
+            s = s + Cmat(2*k+1,2*l+1)*Fg(l)
+            !write(*,'(A,E20.10, A,E20.10,A,I4,A,E20.10,A,E20.10,A,E20.10,A,E20.10)') "s:", s, " mulval:", Cmat(2*k+1,2*l+1)*fac_hint(l-1)/(l+g+0.5_kind)**(l+0.5_kind) *exp(l+g+0.5_kind),". l:",l, ", C:", Cmat(2*k+1,2*l+1), ", fhalf:",fac_hint(l-1), ", denom:", (l+g+0.5_kind)**(l+0.5_kind), " exp:", exp(l+g+0.5_kind)
         end do
 
-        gamma_pcoeffg = s*sqrt(2.0_kind)/pi
 
-
+        gamma_pcoeffg=s
     end function
 
     real(kind) function fac(n) !!factorial
@@ -116,6 +121,31 @@ module fspec
         endif
 
         fac = f(n)
+    end function
+
+    real(kind) function ffac(n) !! double factorial
+        integer, intent(in) :: n
+        logical, save :: first_time = .true.
+        real(kind), save, allocatable :: f(:)
+        integer :: sz, i
+        if(kind == 8) then
+            sz = 169
+        elseif(kind==16) then
+            sz = 1754
+        endif
+        if(n > sz) error stop "try to compute factorial for too large number. Increase precision"
+        if(first_time) then
+
+            allocate(f(-1:sz))
+            f(-1) = 1
+            f(0) = 1
+            do i =  1,sz
+                f(i) = f(i-2)*i
+            end do
+            first_time = .false.
+        endif
+
+        ffac = f(n)
     end function
 
     real(kind) function fac_hint(n)!!half integer factorial defined as n+1/2 !
