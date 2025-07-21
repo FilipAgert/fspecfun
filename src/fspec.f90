@@ -2,7 +2,7 @@ module fspec
     implicit none
 
     integer, parameter :: kind = 8 !!double precision
-    integer, parameter :: gamma_exp_order = 15 !!expansion order in the gamma series
+    integer, parameter :: gamma_exp_order = 16 !!expansion order in the gamma series
     private
     public :: kind, gamma
 
@@ -49,6 +49,7 @@ module fspec
         if(first_time) then
             do ii = 0, gamma_exp_order
                 pc(ii) = gamma_pcoeffg(real(gammag,kind),ii)
+                write(*,'(A,I4,A,E20.10)') "k:",ii, ", pk:", pc(ii)
             end do
             first_time = .false.
         endif
@@ -85,6 +86,7 @@ module fspec
         s = 0
         do l = 0, k
             s = s + Cmat(2*k+1,2*l+1)*fac_hint(l-1)/(l+g+0.5_kind)**(l+0.5_kind) *exp(l+g+0.5_kind)
+            write(*,'(A,E20.10, A,I4,A,E20.10,A,E20.10,A,E20.10,A,E20.10)') "s:", s, ". l:",l, ", C:", Cmat(2*k+1,2*l+1), ", fhalf:",fac_hint(l-1), ", denom:", (l+g+0.5_kind)**(l+0.5_kind), " exp:", exp(l+g+0.5_kind)
         end do
 
         gamma_pcoeffg = s*sqrt(2.0_kind)/pi
@@ -131,10 +133,10 @@ module fspec
         if(first_time) then
             allocate(g(-sz:sz))
             do i = 0,sz !! gamma(n+1/2)
-                g(i) = sqrt(pi)*fac(2*i)/(4**i * fac(i))
+                g(i) = sqrt(pi)*fac(2*i)/(4_kind**i * fac(i))
             end do
             do i = 1, sz !! gamma(1/2-n)
-                g(-i) = sqrt(pi)*(-4)**i * fac(i)/fac(2*i) 
+                g(-i) = sqrt(pi)*(-4_kind)**i * fac(i)/fac(2*i) 
             end do
             first_time = .false.
         endif
