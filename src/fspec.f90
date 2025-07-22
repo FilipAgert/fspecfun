@@ -2,7 +2,7 @@ module fspec
     implicit none
 
     integer, parameter :: kind = 16 !!double precision
-    integer, parameter :: gamma_exp_order = 13 !!expansion order in the gamma series
+    integer, parameter :: gamma_exp_order = 15 !!expansion order in the gamma series
     private
     public :: kind, gamma
 
@@ -27,76 +27,109 @@ module fspec
     end function
 
     real(kind) function gamma_Ag(x)
-        real(kind), intent(in) ::x
-        integer :: k
-        real(kind) :: s, fac
-        s = 0.5_kind * gamma_pcoeff(0)
-        fac = 1
-        do k =1, gamma_exp_order
-            fac = fac * ((x+1-k)/(x+k)) !Goes as z/z+1 , z(z-1) / (z+1)(z+2) ... as k = 1,2,...
-            s = s + fac*gamma_pcoeff(k)
-            !write(*,*) "s:", s, " fac:", fac, "pc", gamma_pcoeff(k)
-        end do
-        gamma_Ag = s
+        real(kind), intent(in) :: x
+        logical :: first_time = .true.
+        integer(16) ::   B(0:gamma_exp_order,0:gamma_exp_order)
+        real(16) :: Z(0:gamma_exp_order),C(0:gamma_exp_order,0:gamma_exp_order), fg(0:gamma_exp_order),D(0:gamma_exp_order,0:gamma_exp_order)
+        real(16), save::cvec(0:gamma_exp_order)
+        integer :: row, col, n, m, sign
+        integer(16) :: bc
 
-    end function
-    !!Gamma p coefficient for g = -0.5
-    real(kind) function gamma_pcoeff(k)
-        integer, intent(in) ::k
-        logical,save :: first_time = .true.
-        integer ::ii
-        real(kind),save :: pc(0:gamma_exp_order)
-        if(k < 0 .or. k>gamma_exp_order) error stop "invalid coefficient. 0 to gamma_exp_order allowed"
-        if(first_time) then
-            do ii = 0, gamma_exp_order
-                pc(ii) = gamma_pcoeffg(real(gammag,kind),ii)
-                !write(*,'(A,I4,A,E20.10)') "k:",ii, ", pk:", pc(ii)
+
+        if(first_time)then
+            D(0,0) = 1
+            D(1,1) = -1
+            D(2,2) = -6
+            do row = 2,gamma_exp_order-1
+                D(row+1,row+1) = -fac(2*row+2)/(2_16*fac(row) * fac(row+1))
+     
             end do
+
+
+            B = 0
+            B(0,:) = 1
+            do row = 1, gamma_exp_order
+                do col = row,gamma_exp_order
+                    m = row*2-1
+                    n = row+col-1
+
+                    bc = bin(n,m)
+                    if(mod(col-row,2) == 0)then
+                         sign = 1
+                    else
+                         sign = -1
+                    endif
+                    B(row,col) = bc * sign
+                end do
+
+            end do
+            C = gamma_CMAT()
+            fg = gamma_fl(real(gammag,kind))
+            cvec = MATMUL(MATMUL(MATMUL(D,B),C), fg)
             first_time = .false.
         endif
-        gamma_pcoeff = pc(k)
-    end function
 
+        Z(0) = 1
+        do row = 1, gamma_exp_order
+            Z(row) = 1.0_kind/(row+x)
+        end do
+        gamma_AG = dot_product(Z,cvec)
+    end function
     !!Gamma p coefficient for arbitrary g
-    real(kind) function gamma_pcoeffg(g,k)
+    function gamma_fl(g)
         real(kind), intent(in) :: g !!arbitrary number chosen s.t. Re(z + g + 1/2) > 0 in evaluating the gamma function
-        integer, intent(in) :: k
         logical, save :: first_time = .true.
-        real(kind),save :: Cmat(gamma_exp_order*2+1,gamma_exp_order*2+1)
+        real(kind),save :: Cmat(gamma_exp_order*2+1,gamma_exp_order*2+1), CmatCompressed(0:gamma_exp_order, 0:gamma_exp_order), pk(0:gamma_exp_order)
         real(kind) :: s
         real(kind), parameter :: pi = ACOS(-1.0_kind)
         integer :: n, m, l
         real(kind), save :: Fg(0:gamma_exp_order)
+        real(kind) :: gamma_fl(0:gamma_exp_order)
 
-        if(first_time) then
-            Cmat = 0    
-            Cmat(1,1) = 1!!C(1,2 not initialized)
-            Cmat(2,2) = 1
-            do n = 2,size(Cmat,1)-1
-                Cmat(n+1,1) = -Cmat(n-1,1)
-                Cmat(n+1,n+1) = 2_kind*Cmat(n,n)
-            end do  
-            do m = 1, size(Cmat,1)-1
-                do n = m+1, size(Cmat,1)-1
-                    Cmat(n+1,m+1) = 2_kind*Cmat(n,m) -Cmat(n-1,m+1)
-                end do
-            end do
-
+        if(first_time) then            
             do l = 0,gamma_exp_order
                 Fg(l) = sqrt(2.0_kind/pi) * ffac(2*l-1) * exp(l+g+0.5_kind) / (2_kind** l *(l+g+0.5_kind)**(l+0.5_kind))!https://www.numericana.com/answer/info/godfrey.htm
             end do
             first_time = .false.
         end if
-       
+        gamma_fl=Fg
+    end function
 
-        s = 0
-        do l = 0, k
-            s = s + Cmat(2*k+1,2*l+1)*Fg(l)
-            !write(*,'(A,E20.10, A,E20.10,A,I4,A,E20.10,A,E20.10,A,E20.10,A,E20.10)') "s:", s, " mulval:", Cmat(2*k+1,2*l+1)*fac_hint(l-1)/(l+g+0.5_kind)**(l+0.5_kind) *exp(l+g+0.5_kind),". l:",l, ", C:", Cmat(2*k+1,2*l+1), ", fhalf:",fac_hint(l-1), ", denom:", (l+g+0.5_kind)**(l+0.5_kind), " exp:", exp(l+g+0.5_kind)
+    function gamma_CMAT()
+        integer(16) :: CMAT(gamma_exp_order*2+1,gamma_exp_order*2+1)
+        real(16) :: gamma_CMAT(0:gamma_exp_order,0:gamma_exp_order)
+        integer :: m,n
+        Cmat = 0    
+        Cmat(1,1) = 1!!C(1,2 not initialized)
+        Cmat(2,2) = 1
+        do n = 2,size(Cmat,1)-1
+            Cmat(n+1,1) = -Cmat(n-1,1)
+            Cmat(n+1,n+1) = 2_kind*Cmat(n,n)
+        end do  
+        do m = 1, size(Cmat,1)-1
+            do n = m+1, size(Cmat,1)-1
+                Cmat(n+1,m+1) = 2_kind*Cmat(n,m) -Cmat(n-1,m+1)
+            end do
         end do
 
+        do n = 0,gamma_exp_order
+            do m = 0,gamma_exp_order
+                gamma_CMAT(n,m) = Cmat(2*n+1,2*m+1)
+            end do
+        end do
+        gamma_CMAT(0,0) = 0.5_16
+    end function
 
-        gamma_pcoeffg=s
+    integer(16) function bin(n,m)
+        integer, intent(in) :: n,m
+        integer :: u,b
+        bin = 1
+        do u = n,n-m+1,-1
+            bin = bin *u
+        end do
+        do b = m,1,-1
+            bin = bin/b
+        end do
     end function
 
     real(kind) function fac(n) !!factorial

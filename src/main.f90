@@ -8,11 +8,11 @@ program main
     g = gamma(0.1_kind)
     
 
-    write(*,'(A13,F40.35)') "gamma(0.1) = ", g
-    write(*,'(A13,F40.35)') "actual     = ", gamma_01
+    write(*,'(A13,E40.30)') "gamma(0.1) = ", g
+    write(*,'(A13,E40.30)') "actual     = ", gamma_01
     numdigits = abs(log10(abs(g-gamma_01)))
     write(*,'(A,I15)') "Number of correct digits:", numdigits
-    g = gamma(0.5_kind)
+    !g = gamma(0.5_kind)
     ! write(*,'(A13,F40.35)') "gamma(1/2) = ", g
     ! write(*,'(A13,F40.35)') "sqrt(pi)   = ", gamma_05
     ! numdigits = abs(log10(abs(g-gamma_05)))
