@@ -12,7 +12,7 @@ CC = gfortran $(FLAGS) -J$(DMOD) $(LIBS) -c
 CCL = gfortran -o
 
 # Objects
-OBJECTS = $(DOBJ)/fspec.o
+OBJECTS = $(DOBJ)/fspec.o $(DOBJ)/fspec_gamma.o
 MAIN_OBJ = $(DOBJ)/main.o
 
 VPATH = $(DSRC):$(DTEST):$(DSRC)/$(DSH)
