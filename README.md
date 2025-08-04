@@ -20,12 +20,13 @@ app/fspec
 ## Status
 
 **Implemented**:
-- `gamma(x)` — Gamma function via [Lanczos approximation](https://en.wikipedia.org/wiki/Lanczos_approximation) (currently accurate to ~4 digits)
+- `gamma(x)` — Gamma function via [Lanczos approximation](https://en.wikipedia.org/wiki/Lanczos_approximation) (currently accurate to >10 digits)
 
 Accuracy of `gamma(0.1)`:
 ```text
 Expected:   9.5135076986687318362924871772654021925505786260883773430500007704342654...
-Current:  ≈ 9.51341 (3-decimal agreement)
+Current:  ≈ gamma(  0.10) =      9.51350769866873627377868141404E+01
+Number of correct digits: 14
 ```
 
 **Work in Progress**:
