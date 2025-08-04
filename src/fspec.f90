@@ -26,7 +26,7 @@ module fspec
         gamma = sqrt(2*pi) * (x-0.5_kind+gammag)**(x-0.5_kind) * exp(-(x+gammag-0.5_kind)) * gamma_Ag(x-1)
     end function
 
-    real(kind) function gamma_Ag(x)
+    real(kind) function gamma_Ag(x)!https://www.numericana.com/answer/info/godfrey.htm
         real(kind), intent(in) :: x
         logical :: first_time = .true.
         integer(16) ::   B(0:gamma_exp_order,0:gamma_exp_order)
@@ -88,7 +88,7 @@ module fspec
 
         if(first_time) then            
             do l = 0,gamma_exp_order
-                Fg(l) = sqrt(2.0_kind/pi) * ffac(2*l-1) * exp(l+g+0.5_kind) / (2_kind** l *(l+g+0.5_kind)**(l+0.5_kind))!https://www.numericana.com/answer/info/godfrey.htm
+                Fg(l) = sqrt(2.0_kind/pi) * ffac(2*l-1) * exp(l+g+0.5_kind) / (2_kind** l *(l+g+0.5_kind)**(l+0.5_kind))
             end do
             first_time = .false.
         end if
